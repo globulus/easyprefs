@@ -1,0 +1,1 @@
+include ':app', ':easyprefs-annotations', ':easyprefs-processor', ':easyprefs'

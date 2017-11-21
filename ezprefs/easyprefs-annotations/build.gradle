@@ -1,0 +1,17 @@
+apply plugin: 'java'
+apply plugin: 'com.github.dcendents.android-maven'
+
+group='com.github.globulus'
+
+ext {
+    PUBLISH_GROUP_ID = 'net.globulus'
+    PUBLISH_ARTIFACT_ID = 'easyprefs-annotations'
+    PUBLISH_VERSION = '0.0.1'
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+sourceCompatibility = "1.7"
+targetCompatibility = "1.7"
