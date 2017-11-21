@@ -1,4 +1,4 @@
-package net.globulus.easyparcelsample;
+package net.globulus.easyprefssample;
 
 import org.junit.Test;
 

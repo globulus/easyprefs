@@ -1,9 +1,10 @@
 package net.globulus.easyprefs.processor;
 
-import net.globulus.easyprefs.annotation.EasyPrefsMaster;
+import net.globulus.easyprefs.annotation.PrefsMaster;
 import net.globulus.easyprefs.annotation.Pref;
 import net.globulus.easyprefs.annotation.PrefClass;
 import net.globulus.easyprefs.processor.codegen.EasyPrefsCodeGen;
+import net.globulus.easyprefs.processor.util.FrameworkUtil;
 import net.globulus.easyprefs.processor.util.ProcessorLog;
 
 import java.lang.annotation.Annotation;
@@ -30,7 +31,7 @@ import javax.lang.model.util.Types;
 public class Processor extends AbstractProcessor {
 
 	private static final List<Class<? extends Annotation>> ANNOTATIONS = Arrays.asList(
-			EasyPrefsMaster.class,
+			PrefsMaster.class,
 			PrefClass.class,
 			Pref.class
 	);
@@ -66,9 +67,9 @@ public class Processor extends AbstractProcessor {
 		List<PrefType> prefTypes = new ArrayList<>();
 
 		boolean foundMaster = false;
-		String masterTag = EasyPrefsMaster.class.getSimpleName();
+		String masterTag = PrefsMaster.class.getSimpleName();
 		String masterError = masterTag + " must of of format: public static SharedPreferences NAME(Context context)!";
-		for (Element element : roundEnv.getElementsAnnotatedWith(EasyPrefsMaster.class)) {
+		for (Element element : roundEnv.getElementsAnnotatedWith(PrefsMaster.class)) {
 			if (foundMaster) {
 				ProcessorLog.error(element, "Found more than one " + masterTag + "!");
 				return false;
@@ -80,7 +81,7 @@ public class Processor extends AbstractProcessor {
 				return false;
 			}
 			ExecutableType method = (ExecutableType) element.asType();
-			TypeMirror sharedPrefs = mElementUtils.getTypeElement("android.content.SharedPreferences").asType();
+			TypeMirror sharedPrefs = mElementUtils.getTypeElement(FrameworkUtil.IMPORT_SHARED_PREFERENCES).asType();
 			if (!mTypeUtils.isSameType(method.getReturnType(), sharedPrefs)) {
 				ProcessorLog.error(element, masterError);
 				return false;
@@ -91,7 +92,7 @@ public class Processor extends AbstractProcessor {
 				return false;
 			}
 			TypeMirror param0 = method.getParameterTypes().get(0);
-			TypeMirror context = mElementUtils.getTypeElement("android.content.Context").asType();
+			TypeMirror context = mElementUtils.getTypeElement(FrameworkUtil.IMPORT_CONTEXT).asType();
 			if (!mTypeUtils.isSameType(param0, context)) {
 				ProcessorLog.error(element, masterError);
 				return false;
@@ -129,17 +130,6 @@ public class Processor extends AbstractProcessor {
 						}
 					}
 
-//					Set<Modifier> modifiers = member.getModifiers();
-//					if (modifiers.contains(Modifier.STATIC)) {
-//						continue;
-//					}
-//
-//					if (modifiers.contains(Modifier.FINAL)) {
-//						ProcessorLog.error(member,
-//								"The field %s in %s is final. Final can not be Parcelable", element.getSimpleName(),
-//								member.getSimpleName());
-//					}
-
 					PrefField prefField = PrefField.get((VariableElement) member, mElementUtils, mTypeUtils);
 					if (prefField == null) {
 						return false;
@@ -164,35 +154,5 @@ public class Processor extends AbstractProcessor {
 			return false;
 		}
 		return true;
-	}
-
-	private Modifier mapToJavax(Element element, int modifier) {
-		switch (modifier) {
-			case java.lang.reflect.Modifier.ABSTRACT:
-				return Modifier.ABSTRACT;
-			case java.lang.reflect.Modifier.PUBLIC:
-				return Modifier.PUBLIC;
-			case java.lang.reflect.Modifier.PRIVATE:
-				return Modifier.PRIVATE;
-			case java.lang.reflect.Modifier.PROTECTED:
-				return Modifier.PROTECTED;
-			case java.lang.reflect.Modifier.FINAL:
-				return Modifier.FINAL;
-			case java.lang.reflect.Modifier.STATIC:
-				return Modifier.STATIC;
-			case java.lang.reflect.Modifier.TRANSIENT:
-				return Modifier.TRANSIENT;
-			case java.lang.reflect.Modifier.VOLATILE:
-				return Modifier.VOLATILE;
-			case java.lang.reflect.Modifier.SYNCHRONIZED:
-				return Modifier.SYNCHRONIZED;
-			case java.lang.reflect.Modifier.STRICT:
-				return Modifier.STRICTFP;
-			case java.lang.reflect.Modifier.NATIVE:
-				return Modifier.NATIVE;
-			default:
-				ProcessorLog.error(element, "Wrong modifier used: " + modifier);
-				return null;
-		}
 	}
 }

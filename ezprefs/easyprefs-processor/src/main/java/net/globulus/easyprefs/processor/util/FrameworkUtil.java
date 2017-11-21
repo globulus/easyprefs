@@ -2,7 +2,15 @@ package net.globulus.easyprefs.processor.util;
 
 public final class FrameworkUtil {
 
-	public static String PARCEL_QUALIFIED_NAME = "android.os.Parcel";
+	public static final String IMPORT_SHARED_PREFERENCES = "android.content.SharedPreferences";
+	public static final String IMPORT_CONTEXT = "android.content.Context";
+	public static final String IMPORT_STRING = "java.lang.String";
+
+	public static final String TYPE_SET_STRING = "Set<String>";
+
+	public static final String LINE_EDITOR_INIT = "SharedPreferences.Editor editor = getPrefs(context).edit()";
+	public static final String LINE_EDITOR_COMMIT = "editor.commit()";
+
 
 	public static final String PARAM_TARGET = "target";
 	public static final String PARAM_SOURCE = "source";
@@ -15,27 +23,8 @@ public final class FrameworkUtil {
 		return "net.globulus.easyprefs";
 	}
 
-	public static String getParcelablesClassName() {
-		return "Parcelables";
+	public static String capitalize(String string) {
+		return string.substring(0, 1).toUpperCase() + string.substring(1);
 	}
 
-	public static String getParcelerClassName() {
-		return "Parceler";
-	}
-
-	public static String getParcelerClassExtension() {
-		return "_EasyParcel" + getParcelerClassName();
-	}
-
-	public static String getParcelerListClassName() {
-		return "ParcelerList";
-	}
-
-	public static String getParcelerListImplClassName() {
-		return "PrefType" + getParcelerListClassName();
-	}
-
-	public static String getQualifiedName(String className) {
-		return String.format("%s.%s", getEasyPrefsPackageName(), className);
-	}
 }

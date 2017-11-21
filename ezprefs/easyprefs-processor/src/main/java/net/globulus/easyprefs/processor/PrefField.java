@@ -1,6 +1,7 @@
 package net.globulus.easyprefs.processor;
 
 import net.globulus.easyprefs.annotation.Pref;
+import net.globulus.easyprefs.processor.util.FrameworkUtil;
 import net.globulus.easyprefs.processor.util.ProcessorLog;
 
 import javax.lang.model.element.Element;
@@ -18,6 +19,8 @@ public class PrefField {
 	public final String fieldName;
 	public final String key;
 	public final String defaultValue;
+	public final boolean clear;
+
 	private boolean error = false;
 
 	private PrefField(VariableElement element,
@@ -32,10 +35,13 @@ public class PrefField {
 			if (!annotation.key().isEmpty()) {
 				key = annotation.key();
 			}
+			this.clear = annotation.clear();
+		} else {
+			this.clear = true;
 		}
 		this.key = key;
 		if (element.getConstantValue() != null) {
-			if (typeUtils.isSameType(type, elementUtils.getTypeElement("java.lang.String").asType())) {
+			if (typeUtils.isSameType(type, elementUtils.getTypeElement(FrameworkUtil.IMPORT_STRING).asType())) {
 				this.defaultValue = String.format("\"%s\"", element.getConstantValue());
 			} else {
 				this.defaultValue = "" + element.getConstantValue();
@@ -57,9 +63,9 @@ public class PrefField {
 					this.defaultValue = "0F";
 					break;
 				case DECLARED: {
-					if (typeUtils.isSameType(type, elementUtils.getTypeElement("java.lang.String").asType())) {
+					if (typeUtils.isSameType(type, elementUtils.getTypeElement(FrameworkUtil.IMPORT_STRING).asType())) {
 						this.defaultValue = "\"\"";
-					} else if (this.fieldType.contains("Set<String>")) {
+					} else if (this.fieldType.contains(FrameworkUtil.TYPE_SET_STRING)) {
 						this.defaultValue = null;
 					} else {
 						this.defaultValue = null;

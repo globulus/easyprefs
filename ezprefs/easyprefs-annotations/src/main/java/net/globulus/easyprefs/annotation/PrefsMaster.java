@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Created by gordanglavas on 29/09/16.
  */
-@Target(ElementType.FIELD)
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.CLASS)
-public @interface PrefsContext {
+public @interface PrefsMaster {
 }

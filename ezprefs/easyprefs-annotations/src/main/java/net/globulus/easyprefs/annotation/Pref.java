@@ -13,4 +13,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 public @interface Pref {
     String key() default "";
+    boolean clear() default true;
 }

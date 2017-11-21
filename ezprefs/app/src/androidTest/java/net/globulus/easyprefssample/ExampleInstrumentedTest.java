@@ -1,4 +1,4 @@
-package net.globulus.easyparcelsample;
+package net.globulus.easyprefssample;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

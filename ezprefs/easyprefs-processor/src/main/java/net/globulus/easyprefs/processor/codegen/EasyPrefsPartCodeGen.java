@@ -1,9 +1,13 @@
 package net.globulus.easyprefs.processor.codegen;
 
+import com.annimon.stream.Stream;
+import com.annimon.stream.function.Predicate;
+
 import net.globulus.easyprefs.processor.PrefField;
 import net.globulus.easyprefs.processor.PrefType;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import javax.lang.model.element.Modifier;
 
@@ -24,6 +28,16 @@ public class EasyPrefsPartCodeGen {
 		}
 
 		if (type.staticClass) {
+			List<PrefField> clearables = Stream.of(type.fields)
+					.filter(new Predicate<PrefField>() {
+						@Override
+						public boolean test(PrefField value) {
+							return value.clear;
+						}
+					})
+					.toList();
+			GenericCodeGen.generateClearMethod(clearables, jw);
+
 			jw.endType();
 			jw.emitEmptyLine();
 		}

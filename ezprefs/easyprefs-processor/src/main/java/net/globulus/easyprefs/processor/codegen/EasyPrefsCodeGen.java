@@ -1,5 +1,10 @@
 package net.globulus.easyprefs.processor.codegen;
 
+import com.annimon.stream.Stream;
+import com.annimon.stream.function.Function;
+import com.annimon.stream.function.Predicate;
+
+import net.globulus.easyprefs.processor.PrefField;
 import net.globulus.easyprefs.processor.PrefType;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
 
@@ -33,8 +38,8 @@ public class EasyPrefsCodeGen {
 			jw.emitPackage(packageName);
 			jw.emitImports("java.util.Set");
 			jw.emitImports("java.util.HashSet");
-			jw.emitImports("android.content.Context");
-			jw.emitImports("android.content.SharedPreferences");
+			jw.emitImports(FrameworkUtil.IMPORT_CONTEXT);
+			jw.emitImports(FrameworkUtil.IMPORT_SHARED_PREFERENCES);
 			jw.emitEmptyLine();
 
 			jw.emitJavadoc("Generated class by @%s . Do not modify this code!", className);
@@ -52,32 +57,29 @@ public class EasyPrefsCodeGen {
 			jw.emitSingleLineComment("Basic storage methods");
 			jw.emitEmptyLine();
 
-			final String editorInit = "SharedPreferences.Editor editor = getPrefs(context).edit()";
-			final String editorCommit = "editor.commit()";
-
 			jw.beginMethod("void", "removePreferencesField", modifiers,
 					"Context", "context", "String", "key");
-			jw.emitStatement(editorInit);
+			jw.emitStatement(FrameworkUtil.LINE_EDITOR_INIT);
 			jw.emitStatement("editor.remove(key)");
-			jw.emitStatement(editorCommit);
+			jw.emitStatement(FrameworkUtil.LINE_EDITOR_COMMIT);
 			jw.endMethod();
 			jw.emitEmptyLine();
 
 			for (String type : Arrays.asList("int", "long", "float", "boolean", "String", "Set<String>")) {
 				String method = type;
 				boolean addRemove = false;
-				if (type.equals("Set<String>")) {
+				if (type.equals(FrameworkUtil.TYPE_SET_STRING)) {
 					method = "StringSet";
 					addRemove = true;
 				} else if (!type.equals("String")) {
-					method = type.substring(0, 1).toUpperCase() + type.substring(1);
+					method = FrameworkUtil.capitalize(type);
 				}
 
 				jw.beginMethod("void", "putPreferencesField", modifiers,
 						"Context", "context", "String", "key", type, "value");
-				jw.emitStatement(editorInit);
+				jw.emitStatement(FrameworkUtil.LINE_EDITOR_INIT);
 				jw.emitStatement("editor.put%s(key, value)", method);
-				jw.emitStatement(editorCommit);
+				jw.emitStatement(FrameworkUtil.LINE_EDITOR_COMMIT);
 				jw.endMethod();
 				jw.emitEmptyLine();
 
@@ -114,6 +116,50 @@ public class EasyPrefsCodeGen {
 			for (PrefType prefType : classes) {
 				codeGen.generate(prefType, jw);
 			}
+
+			List<PrefField> clearables = Stream.of(classes)
+					.filter(new Predicate<PrefType>() {
+						@Override
+						public boolean test(PrefType value) {
+							return !value.staticClass;
+						}
+					})
+					.map(new Function<PrefType, List<PrefField>>() {
+						@Override
+						public List<PrefField> apply(PrefType prefType) {
+							return prefType.fields;
+						}
+					})
+					.flatMap(new Function<List<PrefField>, Stream<PrefField>>() {
+						@Override
+						public Stream<PrefField> apply(List<PrefField> prefFields) {
+							return Stream.of(prefFields);
+						}
+					})
+					.filter(new Predicate<PrefField>() {
+						@Override
+						public boolean test(PrefField value) {
+							return value.clear;
+						}
+					})
+					.toList();
+			GenericCodeGen.generateClearMethod(clearables, jw);
+
+			jw.emitEmptyLine();
+			jw.beginMethod("void", "clearAll", modifiers, "Context", "context");
+			jw.emitStatement("clear(context)");
+			List<PrefType> clearableClasses = Stream.of(classes)
+					.filter(new Predicate<PrefType>() {
+						@Override
+						public boolean test(PrefType value) {
+							return value.staticClass;
+						}
+					})
+					.toList();
+			for (PrefType prefType : clearableClasses) {
+				jw.emitStatement("%s.clear(context)", prefType.name);
+			}
+			jw.endMethod();
 
 			jw.endType();
 			jw.close();
