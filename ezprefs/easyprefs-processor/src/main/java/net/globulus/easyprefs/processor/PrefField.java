@@ -1,11 +1,13 @@
 package net.globulus.easyprefs.processor;
 
 import net.globulus.easyprefs.annotation.Pref;
+import net.globulus.easyprefs.annotation.PrefFunctionStub;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
 import net.globulus.easyprefs.processor.util.ProcessorLog;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -19,8 +21,12 @@ public class PrefField {
 	public final String fieldName;
 	public final String key;
 	public final String defaultValue;
+	public final String autoset;
 	public final boolean clear;
+	public final String comment;
 
+	private String function;
+	private String rawDefaultValue;
 	private boolean error = false;
 
 	private PrefField(VariableElement element,
@@ -35,9 +41,27 @@ public class PrefField {
 			if (!annotation.key().isEmpty()) {
 				key = annotation.key();
 			}
+			this.autoset = annotation.autoset();
+			try {
+				annotation.function();
+			} catch (MirroredTypeException e) {
+				this.function = e.getTypeMirror().toString();
+				if (this.function != null && this.function.contains(PrefFunctionStub.class.getSimpleName())) {
+					this.function = null;
+				}
+			}
 			this.clear = annotation.clear();
+			this.comment = annotation.comment();
+			if (this.function != null && annotation.rawDefaultValue().isEmpty()) {
+				ProcessorLog.error(element, "If you supply a mapping function, you must supply a rawDefaultValue as well.");
+				error = true;
+			}
+			rawDefaultValue = annotation.rawDefaultValue();
 		} else {
 			this.clear = true;
+			this.autoset = null;
+			this.function = null;
+			this.comment = "";
 		}
 		this.key = key;
 		if (element.getConstantValue() != null) {
@@ -67,10 +91,11 @@ public class PrefField {
 						this.defaultValue = "\"\"";
 					} else if (this.fieldType.contains(FrameworkUtil.TYPE_SET_STRING)) {
 						this.defaultValue = null;
+					} else if (this.function != null) {
+						this.defaultValue = null;
 					} else {
 						this.defaultValue = null;
 						error(element);
-						break;
 					}
 				}
 					break;
@@ -88,6 +113,14 @@ public class PrefField {
 			return null;
 		}
 		return field;
+	}
+
+	public String getFunction() {
+		return function;
+	}
+
+	public String getRawDefaultValue() {
+		return rawDefaultValue;
 	}
 
 	private void error(Element element) {

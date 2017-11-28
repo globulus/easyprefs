@@ -14,4 +14,8 @@ import java.lang.annotation.Target;
 public @interface Pref {
     String key() default "";
     boolean clear() default true;
+    String autoset() default "";
+    Class<? extends PrefFunction> function() default PrefFunctionStub.class;
+    String rawDefaultValue() default "";
+    String comment() default "";
 }
