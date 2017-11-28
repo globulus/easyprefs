@@ -49,6 +49,19 @@ public class MorePrefs {
     // When invoking put, autoset the value to true.
     @Pref(clear = false, comment = "Proba 4", autoset = "true")
     boolean dontClearAddCommentAutoSetToTrue;
+    
+    //
+    // Expose these two methods in EasyPrefs so that you can have a centralized prefs manager.
+    //
+    @PrefMethod
+    public static void putThisPref(Context context, int pref) {
+        EasyPrefs.putPreferencesField(context, "thisPref", pref);
+    }
+
+    @PrefMethod
+    public static int getThisPref(Context context) {
+        return EasyPrefs.getPreferencesField(context, "thisPref", 1);
+    }
 
     // Classes that don't go into SharedPreferences by default can be added to it
     // via mapper classes, which transform the custom class into one of the
@@ -258,6 +271,14 @@ public class EasyPrefs {
 
   public static void putTest3(Context context, long value) {
     putPreferencesField(context, "notTest3", value);
+  }
+  
+  public static void putThisPref(Context context0, int int1) {
+    net.globulus.easyprefssample.MorePrefs.putThisPref(context0, int1);
+  }
+
+  public static int getThisPref(Context context0) {
+    return net.globulus.easyprefssample.MorePrefs.getThisPref(context0);
   }
 
   public static void clear(Context context) {
