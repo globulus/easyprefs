@@ -4,6 +4,7 @@ import com.annimon.stream.Stream;
 import com.annimon.stream.function.Function;
 import com.annimon.stream.function.Predicate;
 
+import net.globulus.easyprefs.processor.ExposedMethod;
 import net.globulus.easyprefs.processor.PrefField;
 import net.globulus.easyprefs.processor.PrefType;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
@@ -27,7 +28,8 @@ public class EasyPrefsCodeGen {
 
 	public void generate(Filer filer,
 						 String masterMethod,
-						 List<PrefType> classes) {
+						 List<PrefType> classes,
+						 List<ExposedMethod> methods) {
 		try {
 			String packageName = FrameworkUtil.getEasyPrefsPackageName();
 			String className = "EasyPrefs";
@@ -44,6 +46,10 @@ public class EasyPrefsCodeGen {
 
 			jw.emitJavadoc("Generated class by @%s . Do not modify this code!", className);
 			jw.beginType(className, "class", EnumSet.of(Modifier.PUBLIC), null);
+			jw.emitEmptyLine();
+
+			jw.beginConstructor(EnumSet.of(Modifier.PRIVATE));
+			jw.endConstructor();
 			jw.emitEmptyLine();
 
 			Set<Modifier> modifiers = EnumSet.of(Modifier.PUBLIC, Modifier.STATIC);
@@ -111,10 +117,14 @@ public class EasyPrefsCodeGen {
 			jw.emitSingleLineComment("Generated methods");
 			jw.emitEmptyLine();
 
-			EasyPrefsPartCodeGen codeGen = new EasyPrefsPartCodeGen();
-
+			PrefClassCodeGen typeCodeGen = new PrefClassCodeGen();
 			for (PrefType prefType : classes) {
-				codeGen.generate(prefType, jw);
+				typeCodeGen.generateCode(prefType, jw);
+			}
+
+			PrefMethodCodeGen methodCodeGen = new PrefMethodCodeGen();
+			for (ExposedMethod exposedMethod : methods) {
+				methodCodeGen.generateCode(exposedMethod, jw);
 			}
 
 			List<PrefField> clearables = Stream.of(classes)
@@ -143,7 +153,7 @@ public class EasyPrefsCodeGen {
 						}
 					})
 					.toList();
-			GenericCodeGen.generateClearMethod(clearables, jw);
+			PrefFieldCodeGen.generateClearMethod(clearables, jw);
 
 			jw.emitEmptyLine();
 			jw.beginMethod("void", "clearAll", modifiers, "Context", "context");

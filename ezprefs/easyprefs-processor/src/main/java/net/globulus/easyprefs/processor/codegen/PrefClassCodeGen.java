@@ -6,6 +6,7 @@ import com.annimon.stream.function.Predicate;
 import net.globulus.easyprefs.processor.PrefField;
 import net.globulus.easyprefs.processor.PrefType;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -13,16 +14,16 @@ import javax.lang.model.element.Modifier;
 
 import javawriter.EzprefsJavaWriter;
 
-public class EasyPrefsPartCodeGen {
+public class PrefClassCodeGen implements CodeGen<PrefType> {
 
-    public void generate(PrefType type, EzprefsJavaWriter jw) throws Exception {
+    public void generateCode(PrefType type, EzprefsJavaWriter jw) throws IOException {
     	if (type.staticClass) {
     		jw.emitEmptyLine();
 			jw.beginType(type.name, "class", EnumSet.of(Modifier.PUBLIC, Modifier.STATIC), null);
 			jw.emitEmptyLine();
 		}
 
-		GenericCodeGen codeGen = new GenericCodeGen();
+		PrefFieldCodeGen codeGen = new PrefFieldCodeGen();
 		for (PrefField field : type.fields) {
 			codeGen.generateCode(field, jw);
 		}
@@ -36,7 +37,7 @@ public class EasyPrefsPartCodeGen {
 						}
 					})
 					.toList();
-			GenericCodeGen.generateClearMethod(clearables, jw);
+			PrefFieldCodeGen.generateClearMethod(clearables, jw);
 
 			jw.endType();
 			jw.emitEmptyLine();

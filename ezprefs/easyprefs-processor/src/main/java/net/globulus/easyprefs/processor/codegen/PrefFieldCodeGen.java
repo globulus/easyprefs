@@ -12,7 +12,7 @@ import javax.lang.model.element.Modifier;
 
 import javawriter.EzprefsJavaWriter;
 
-public class GenericCodeGen implements FieldCodeGen {
+public class PrefFieldCodeGen implements CodeGen<PrefField> {
 
     @Override
     public void generateCode(PrefField field, EzprefsJavaWriter jw) throws IOException {
@@ -101,6 +101,13 @@ public class GenericCodeGen implements FieldCodeGen {
           jw.emitStatement("removeFromPreferencesField(context, \"%s\", value)", field.key);
           jw.endMethod();
       }
+
+        if (!field.comment.isEmpty()) {
+            jw.emitEmptyLine();
+            jw.emitSingleLineComment("");
+            jw.emitSingleLineComment("END " + field.comment);
+            jw.emitSingleLineComment("");
+        }
     }
 
     public static void generateClearMethod(List<PrefField> clearables,

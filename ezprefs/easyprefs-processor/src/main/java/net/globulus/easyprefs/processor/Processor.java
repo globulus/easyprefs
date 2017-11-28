@@ -1,8 +1,9 @@
 package net.globulus.easyprefs.processor;
 
-import net.globulus.easyprefs.annotation.PrefsMaster;
+import net.globulus.easyprefs.annotation.PrefMaster;
 import net.globulus.easyprefs.annotation.Pref;
 import net.globulus.easyprefs.annotation.PrefClass;
+import net.globulus.easyprefs.annotation.PrefMethod;
 import net.globulus.easyprefs.processor.codegen.EasyPrefsCodeGen;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
 import net.globulus.easyprefs.processor.util.ProcessorLog;
@@ -31,7 +32,7 @@ import javax.lang.model.util.Types;
 public class Processor extends AbstractProcessor {
 
 	private static final List<Class<? extends Annotation>> ANNOTATIONS = Arrays.asList(
-			PrefsMaster.class,
+			PrefMaster.class,
 			PrefClass.class,
 			Pref.class
 	);
@@ -65,11 +66,12 @@ public class Processor extends AbstractProcessor {
 
 		String masterMethod = null;
 		List<PrefType> prefTypes = new ArrayList<>();
+		List<ExposedMethod> exposedMethods = new ArrayList<>();
 
 		boolean foundMaster = false;
-		String masterTag = PrefsMaster.class.getSimpleName();
+		String masterTag = PrefMaster.class.getSimpleName();
 		String masterError = masterTag + " must of of format: public static SharedPreferences NAME(Context context)!";
-		for (Element element : roundEnv.getElementsAnnotatedWith(PrefsMaster.class)) {
+		for (Element element : roundEnv.getElementsAnnotatedWith(PrefMaster.class)) {
 			if (foundMaster) {
 				ProcessorLog.error(element, "Found more than one " + masterTag + "!");
 				return false;
@@ -99,6 +101,15 @@ public class Processor extends AbstractProcessor {
 			}
 			TypeElement declaringClass = (TypeElement) element.getEnclosingElement();
 			masterMethod = declaringClass.getQualifiedName().toString() + "." + element.getSimpleName();
+		}
+
+		for (Element element : roundEnv.getElementsAnnotatedWith(PrefMethod.class)) {
+			if (!element.getModifiers().contains(Modifier.PUBLIC)
+					|| !element.getModifiers().contains(Modifier.STATIC)) {
+				ProcessorLog.error(element, PrefMethod.class.getSimpleName() + " methods must be public static!");
+				return false;
+			}
+			exposedMethods.add(new ExposedMethod(element));
 		}
 
 //		if (!foundMaster) {
@@ -141,7 +152,7 @@ public class Processor extends AbstractProcessor {
 			}
 		}
 
-		new EasyPrefsCodeGen().generate(mFiler, masterMethod, prefTypes);
+		new EasyPrefsCodeGen().generate(mFiler, masterMethod, prefTypes, exposedMethods);
 
 		return true;
 	}

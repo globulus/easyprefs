@@ -15,8 +15,8 @@ public class MainActivity extends AppCompatActivity {
 		setContentView(R.layout.activity_main);
 
 		int a = 5;
-		EasyPrefs.MidsPrefs.putProba1(this, a);
-		int b = EasyPrefs.MidsPrefs.getProba1(this);
+		EasyPrefs.MorePrefs.putIntField(this, a);
+		int b = EasyPrefs.MorePrefs.getIntField(this);
 		if (a != b) {
 			throw new RuntimeException();
 		}
@@ -24,8 +24,8 @@ public class MainActivity extends AppCompatActivity {
 		JsonObject json = new JsonObject();
 		json.addProperty("a", 1);
 		json.addProperty("b", "aa");
-		EasyPrefs.MidsPrefs.putJsonTest(this, json);
-		JsonObject json2 = EasyPrefs.MidsPrefs.getJsonTest(this);
+		EasyPrefs.MorePrefs.putJsonTest(this, json);
+		JsonObject json2 = EasyPrefs.MorePrefs.getJsonTest(this);
 		if (!json2.equals(json)) {
 			throw new RuntimeException();
 		}

@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 
-import net.globulus.easyprefs.annotation.PrefsMaster;
+import net.globulus.easyprefs.annotation.PrefMaster;
 import net.globulus.easyprefs.annotation.Pref;
 import net.globulus.easyprefs.annotation.PrefClass;
 
@@ -13,12 +13,19 @@ import net.globulus.easyprefs.annotation.PrefClass;
  * Created by gordanglavas on 21/11/2017.
  */
 
+// Add fields from this class to EasyPrefs, but only those annotated with @Pref.
+// Add fields directly to EasyPrefs, and not inside an enclosing static class.
 @PrefClass(autoInclude = false, staticClass = false)
 public class SharedPrefs {
 
     private static SharedPreferences sSecureInstance;
 
-    @PrefsMaster
+    //
+    // PrefMaster annotation is placed on a public static method returning an instance of
+    // SharedPreferences, and this method will be used in generated code to retrieve the
+    // SharedPreferences instance we want to work with.
+    //
+    @PrefMaster
     public static SharedPreferences getSecureInstance(@NonNull Context context) {
         if (sSecureInstance == null) {
            sSecureInstance = PreferenceManager.getDefaultSharedPreferences(context);
@@ -26,12 +33,11 @@ public class SharedPrefs {
         return sSecureInstance;
     }
 
-    int probaa1;
-    @Pref
-    String probaa2;
-    @Pref(key = "test")
-    long probaa3;
+    int test1; // This field won't be included
 
-    void test() {
-    }
+    @Pref
+    String test2; // This field will be included.
+
+    @Pref(key = "notTest3")
+    long test3; // This field will be included with a custom key.
 }
