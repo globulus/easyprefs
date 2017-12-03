@@ -1,5 +1,22 @@
-# easyprefs
-EasyPrefs uses annotations to generate Android SharedPreferences boilerplate code. Simply annotate classes, methods or fields, and EasyPrefs will generate a class containing static methods for storing and retrieving to and from SharedPreferences. Check out sample code below to see it in action:
+# EasyPrefs
+EasyPrefs uses annotations to generate Android SharedPreferences boilerplate code. Simply annotate classes, methods or fields, and EasyPrefs will generate a class containing static methods for storing and retrieving to and from SharedPreferences. Check out sample code below to see it in action.
+
+### Installation
+
+EasyPrefs is hosted on JitPack - just add the JitPack maven repository to your list of repositories, and then add the EasyPrefs dependency:
+
+```gradle
+allprojects {
+        repositories {
+            jcenter()
+            maven { url "https://jitpack.io" }
+        }
+   }
+   dependencies {
+        compile 'com.github.globulus:easyprefs:-SNAPSHOT'
+   }
+```
+### Sample Code
 
 SharedPrefs.java
 ```java
