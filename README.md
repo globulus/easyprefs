@@ -7,14 +7,15 @@ EasyPrefs is hosted on JitPack - just add the JitPack maven repository to your l
 
 ```gradle
 allprojects {
-        repositories {
-            jcenter()
-            maven { url "https://jitpack.io" }
-        }
+  repositories {
+      jcenter()
+      maven { url "https://jitpack.io" }
    }
-   dependencies {
-        compile 'com.github.globulus:easyprefs:-SNAPSHOT'
-   }
+}
+...
+dependencies {
+   compile 'com.github.globulus:easyprefs:-SNAPSHOT'
+}
 ```
 ### Sample Code
 
