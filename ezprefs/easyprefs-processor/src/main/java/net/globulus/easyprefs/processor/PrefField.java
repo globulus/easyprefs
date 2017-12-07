@@ -87,10 +87,9 @@ public class PrefField {
 					this.defaultValue = "0F";
 					break;
 				case DECLARED: {
-					if (typeUtils.isSameType(type, elementUtils.getTypeElement(FrameworkUtil.IMPORT_STRING).asType())) {
-						this.defaultValue = "\"\"";
-					} else if (this.fieldType.contains(FrameworkUtil.TYPE_SET_STRING)) {
-						this.defaultValue = null;
+					if (typeUtils.isSameType(type, elementUtils.getTypeElement(FrameworkUtil.IMPORT_STRING).asType())
+							|| this.fieldType.contains(FrameworkUtil.TYPE_SET_STRING)) {
+						this.defaultValue = "null";
 					} else if (this.function != null) {
 						this.defaultValue = null;
 					} else {

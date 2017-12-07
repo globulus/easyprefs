@@ -74,7 +74,7 @@ public class EasyPrefsCodeGen {
 			for (String type : Arrays.asList("int", "long", "float", "boolean", "String", "Set<String>")) {
 				String method = type;
 				boolean addRemove = false;
-				if (type.equals(FrameworkUtil.TYPE_SET_STRING)) {
+				if (type.equals("Set<String>")) {
 					method = "StringSet";
 					addRemove = true;
 				} else if (!type.equals("String")) {

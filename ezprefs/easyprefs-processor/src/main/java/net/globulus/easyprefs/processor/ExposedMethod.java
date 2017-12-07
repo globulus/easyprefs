@@ -30,7 +30,11 @@ public class ExposedMethod {
         for (TypeMirror param : method.getParameterTypes()) {
             paramsList.add(param.toString());
             String[] components = param.toString().toLowerCase().split("\\.");
-            paramsList.add(components[components.length - 1] + count);
+            String paramName = components[components.length - 1];
+            if (paramName.endsWith(">")) {
+                paramName = paramName.substring(0, paramName.length() - 1);
+            }
+            paramsList.add(paramName + count);
             count++;
         }
         this.params = paramsList.toArray(new String[paramsList.size()]);

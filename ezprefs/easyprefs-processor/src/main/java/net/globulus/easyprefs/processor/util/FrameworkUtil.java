@@ -6,7 +6,7 @@ public final class FrameworkUtil {
 	public static final String IMPORT_CONTEXT = "android.content.Context";
 	public static final String IMPORT_STRING = "java.lang.String";
 
-	public static final String TYPE_SET_STRING = "Set<String>";
+	public static final String TYPE_SET_STRING = "Set<java.lang.String>";
 
 	public static final String LINE_EDITOR_INIT = "SharedPreferences.Editor editor = getPrefs(context).edit()";
 	public static final String LINE_EDITOR_COMMIT = "editor.commit()";
