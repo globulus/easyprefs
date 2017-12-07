@@ -11,6 +11,8 @@ import net.globulus.easyprefs.annotation.PrefClass;
 import net.globulus.easyprefs.annotation.PrefFunction;
 import net.globulus.easyprefs.annotation.PrefMethod;
 
+import java.util.Set;
+
 /**
  * Created by gordanglavas on 21/11/2017.
  */
@@ -21,8 +23,16 @@ import net.globulus.easyprefs.annotation.PrefMethod;
 public class MorePrefs {
 
     int intField;
-    final String stringFieldWithDefaultValue = "asss";
+    final String stringFieldWithDefaultValue = "default string value";
     final long longFieldWithDefaultValue = 3;
+
+    Set<String> nonNullStringSet;
+    @Pref(nullable = true)
+    Set<String> nullableStringSet;
+
+    String nonNullString;
+    @Pref(nullable = true)
+    String nullableString;
 
     // Don't add this field to clear() or clearAll() methods
     // Add a comment above its getter and setter
@@ -36,6 +46,9 @@ public class MorePrefs {
     @Pref(function = JsonObjectString.class, rawDefaultValue = "(String) null")
     JsonObject jsonTest;
 
+    //
+    // Expose these two methods in EasyPrefs so that you can have a centralized prefs manager.
+    //
     @PrefMethod
     public static void putThisPref(Context context, int pref) {
         EasyPrefs.putPreferencesField(context, "thisPref", pref);
