@@ -59,7 +59,7 @@ MorePrefs.java
 public class MorePrefs {
 
     int intField;
-    final String stringFieldWithDefaultValue = "asss";
+    final String stringFieldWithDefaultValue = "default string value";
     final long longFieldWithDefaultValue = 3;
 
     // Don't add this field to clear() or clearAll() methods
@@ -67,6 +67,14 @@ public class MorePrefs {
     // When invoking put, autoset the value to true.
     @Pref(clear = false, comment = "Proba 4", autoset = "true")
     boolean dontClearAddCommentAutoSetToTrue;
+    
+    Set<String> nonNullStringSet;
+    @Pref(nullable = true)
+    Set<String> nullableStringSet;
+
+    String nonNullString;
+    @Pref(nullable = true)
+    String nullableString;
     
     //
     // Expose these two methods in EasyPrefs so that you can have a centralized prefs manager.
@@ -107,7 +115,7 @@ public class MorePrefs {
     }
 }
 ```
-EasyPrefs.java (generated automatically when making the project)
+EasyPrefs.java *(generated automatically when making the project)*
 ```java
 package net.globulus.easyprefs;
 
@@ -223,7 +231,7 @@ public class EasyPrefs {
     }
 
     public static String getStringFieldWithDefaultValue(Context context) {
-      return getPreferencesField(context, "stringFieldWithDefaultValue", "asss");
+      return getPreferencesField(context, "stringFieldWithDefaultValue", "default string value");
     }
 
     public static void putStringFieldWithDefaultValue(Context context, String value) {
@@ -236,6 +244,38 @@ public class EasyPrefs {
 
     public static void putLongFieldWithDefaultValue(Context context, long value) {
       putPreferencesField(context, "longFieldWithDefaultValue", value);
+    }
+
+    public static Set<String> getNonNullStringSet(Context context) {
+      return getPreferencesField(context, "nonNullStringSet", new HashSet<String>());
+    }
+
+    public static void putNonNullStringSet(Context context, Set<String> value) {
+      putPreferencesField(context, "nonNullStringSet", value);
+    }
+
+    public static Set<String> getNullableStringSet(Context context) {
+      return getPreferencesField(context, "nullableStringSet", (java.util.Set<java.lang.String>) null);
+    }
+
+    public static void putNullableStringSet(Context context, Set<String> value) {
+      putPreferencesField(context, "nullableStringSet", value);
+    }
+
+    public static String getNonNullString(Context context) {
+      return getPreferencesField(context, "nonNullString", "");
+    }
+
+    public static void putNonNullString(Context context, String value) {
+      putPreferencesField(context, "nonNullString", value);
+    }
+
+    public static String getNullableString(Context context) {
+      return getPreferencesField(context, "nullableString", (java.lang.String) null);
+    }
+
+    public static void putNullableString(Context context, String value) {
+      putPreferencesField(context, "nullableString", value);
     }
 
     // 
@@ -269,6 +309,10 @@ public class EasyPrefs {
       editor.remove("intField");
       editor.remove("stringFieldWithDefaultValue");
       editor.remove("longFieldWithDefaultValue");
+      editor.remove("nonNullStringSet");
+      editor.remove("nullableStringSet");
+      editor.remove("nonNullString");
+      editor.remove("nullableString");
       editor.remove("jsonTest");
       editor.commit();
     }
@@ -290,7 +334,7 @@ public class EasyPrefs {
   public static void putTest3(Context context, long value) {
     putPreferencesField(context, "notTest3", value);
   }
-  
+
   public static void putThisPref(Context context0, int int1) {
     net.globulus.easyprefssample.MorePrefs.putThisPref(context0, int1);
   }
