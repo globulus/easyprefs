@@ -1,5 +1,8 @@
 package net.globulus.easyprefs.processor;
 
+import com.annimon.stream.Stream;
+import com.annimon.stream.function.Function;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +20,8 @@ public class ExposedMethod {
     public final String name;
     public final String originalMethod;
     public final String returnType;
-    public final String[] params;
+    public final List<String> params;
+    public final List<String> thrown;
 
     public ExposedMethod(Element element) {
         ExecutableType method = (ExecutableType) element.asType();
@@ -25,18 +29,23 @@ public class ExposedMethod {
         this.name = element.getSimpleName().toString();
         this.originalMethod = declaringClass.getQualifiedName().toString() + "." + element.getSimpleName();
         this.returnType = method.getReturnType().toString();
-        List<String> paramsList = new ArrayList<>();
+        this.params = new ArrayList<>();
         int count = 0;
         for (TypeMirror param : method.getParameterTypes()) {
-            paramsList.add(param.toString());
+            this.params.add(param.toString());
             String[] components = param.toString().toLowerCase().split("\\.");
             String paramName = components[components.length - 1];
             if (paramName.endsWith(">")) {
                 paramName = paramName.substring(0, paramName.length() - 1);
             }
-            paramsList.add(paramName + count);
+            this.params.add(paramName + count);
             count++;
         }
-        this.params = paramsList.toArray(new String[paramsList.size()]);
+        this.thrown = Stream.of(method.getThrownTypes()).map(new Function<TypeMirror, String>() {
+            @Override
+            public String apply(TypeMirror typeMirror) {
+                return typeMirror.toString();
+            }
+        }).toList();
     }
 }

@@ -14,13 +14,13 @@ public class PrefMethodCodeGen implements CodeGen<ExposedMethod> {
     @Override
     public void generateCode(ExposedMethod method, EzprefsJavaWriter jw) throws IOException {
         jw.emitEmptyLine();
-        jw.beginMethod(method.returnType, method.name, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC), method.params);
+        jw.beginMethod(method.returnType, method.name, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC), method.params, method.thrown);
         StringBuilder params = new StringBuilder();
-        for (int i = 1; i < method.params.length; i += 2) {
+        for (int i = 1; i < method.params.size(); i += 2) {
             if (i > 1) {
                 params.append(", ");
             }
-            params.append(method.params[i]);
+            params.append(method.params.get(i));
         }
         String start;
         if (method.returnType.equals("void")) {
