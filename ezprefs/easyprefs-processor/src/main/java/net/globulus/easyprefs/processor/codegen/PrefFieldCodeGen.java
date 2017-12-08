@@ -88,7 +88,7 @@ public class PrefFieldCodeGen implements CodeGen<PrefField> {
       }
       jw.endMethod();
 
-      if (field.fieldType.equals("Set<String>")) {
+      if (field.fieldType.contains(FrameworkUtil.TYPE_SET_STRING)) {
           jw.emitEmptyLine();
           jw.beginMethod("void", "addTo" + name, modifiers,
                   "Context", "context", "String", "value");
