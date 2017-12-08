@@ -254,6 +254,14 @@ public class EasyPrefs {
       putPreferencesField(context, "nonNullStringSet", value);
     }
 
+    public static void addToNonNullStringSet(Context context, String value) {
+      addToPreferencesField(context, "nonNullStringSet", value);
+    }
+
+    public static void removeFromNonNullStringSet(Context context, String value) {
+      removeFromPreferencesField(context, "nonNullStringSet", value);
+    }
+
     public static Set<String> getNullableStringSet(Context context) {
       return getPreferencesField(context, "nullableStringSet", (java.util.Set<java.lang.String>) null);
     }
@@ -262,6 +270,14 @@ public class EasyPrefs {
       putPreferencesField(context, "nullableStringSet", value);
     }
 
+    public static void addToNullableStringSet(Context context, String value) {
+      addToPreferencesField(context, "nullableStringSet", value);
+    }
+
+    public static void removeFromNullableStringSet(Context context, String value) {
+      removeFromPreferencesField(context, "nullableStringSet", value);
+    }
+    
     public static String getNonNullString(Context context) {
       return getPreferencesField(context, "nonNullString", "");
     }
