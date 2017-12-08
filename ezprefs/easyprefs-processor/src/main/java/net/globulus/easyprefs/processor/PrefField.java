@@ -8,6 +8,7 @@ import net.globulus.easyprefs.processor.util.ProcessorLog;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -67,6 +68,10 @@ public class PrefField {
 		if (element.getConstantValue() != null) {
 			if (typeUtils.isSameType(type, elementUtils.getTypeElement(FrameworkUtil.IMPORT_STRING).asType())) {
 				this.defaultValue = String.format("\"%s\"", element.getConstantValue());
+			} else if (type.getKind() == TypeKind.LONG) {
+				this.defaultValue = "" + element.getConstantValue() + "L";
+			} else if (type.getKind() == TypeKind.FLOAT) {
+				this.defaultValue = "" + element.getConstantValue() + "F";
 			} else {
 				this.defaultValue = "" + element.getConstantValue();
 			}
