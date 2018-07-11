@@ -1,12 +1,13 @@
 package net.globulus.easyprefs.processor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by gordanglavas on 20/11/2017.
  */
 
-public class PrefType {
+public class PrefType implements Serializable {
 
     public final String name;
     public final List<PrefField> fields;

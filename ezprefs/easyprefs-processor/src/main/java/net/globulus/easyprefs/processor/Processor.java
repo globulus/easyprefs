@@ -1,13 +1,15 @@
 package net.globulus.easyprefs.processor;
 
-import net.globulus.easyprefs.annotation.PrefMaster;
 import net.globulus.easyprefs.annotation.Pref;
 import net.globulus.easyprefs.annotation.PrefClass;
+import net.globulus.easyprefs.annotation.PrefMaster;
 import net.globulus.easyprefs.annotation.PrefMethod;
 import net.globulus.easyprefs.processor.codegen.EasyPrefsCodeGen;
+import net.globulus.easyprefs.processor.codegen.MergeFileCodeGen;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
 import net.globulus.easyprefs.processor.util.ProcessorLog;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +38,7 @@ public class Processor extends AbstractProcessor {
 			PrefClass.class,
 			Pref.class
 	);
+	private static final String MERGED_FILE = "ezprefs.merged";
 
 	private Elements mElementUtils;
 	private Types mTypeUtils;
@@ -115,7 +118,7 @@ public class Processor extends AbstractProcessor {
 //		if (!foundMaster) {
 //			ProcessorLog.error(null, "Unable to find " + masterTag);
 //		}
-
+		Boolean shouldMerge = null;
 		for (Element element : roundEnv.getElementsAnnotatedWith(PrefClass.class)) {
 			if (!isValid(element)) {
 				continue;
@@ -125,6 +128,12 @@ public class Processor extends AbstractProcessor {
 
 			PrefClass annotation = element.getAnnotation(PrefClass.class);
 			boolean autoInclude = annotation.autoInclude();
+
+			if (annotation.origin()) {
+				shouldMerge = false;
+			} else if (shouldMerge == null) {
+				shouldMerge = true;
+			}
 
 			List<? extends Element> memberFields = mElementUtils.getAllMembers((TypeElement) element);
 
@@ -152,7 +161,26 @@ public class Processor extends AbstractProcessor {
 			}
 		}
 
-		new EasyPrefsCodeGen().generate(mFiler, masterMethod, prefTypes, exposedMethods);
+		EasyPrefsCodeGen.Input input = new EasyPrefsCodeGen.Input(masterMethod, prefTypes, exposedMethods);
+		if (shouldMerge != null && shouldMerge) {
+			try {
+				Class mergeClass = Class.forName(FrameworkUtil.getEasyPrefsPackageName() + ".EasyPrefsMerge");
+				byte[] bytes = (byte[]) mergeClass.getField("MERGE").get(null);
+				EasyPrefsCodeGen.Input merge = EasyPrefsCodeGen.Input.fromBytes(bytes);
+				input = input.mergedUp(merge);
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (NoSuchFieldException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		new MergeFileCodeGen().generate(mFiler, input);
+
+		new EasyPrefsCodeGen().generate(mFiler, input);
 
 		return true;
 	}

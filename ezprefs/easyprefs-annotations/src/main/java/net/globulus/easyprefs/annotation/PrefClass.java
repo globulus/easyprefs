@@ -13,4 +13,5 @@ import java.lang.annotation.Target;
 public @interface PrefClass {
 	boolean staticClass() default true;
 	boolean autoInclude() default true;
+	boolean origin() default false;
 }

@@ -3,6 +3,7 @@ package net.globulus.easyprefs.processor;
 import com.annimon.stream.Stream;
 import com.annimon.stream.function.Function;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,7 @@ import javax.lang.model.type.TypeMirror;
  * Created by gordanglavas on 28/11/2017.
  */
 
-public class ExposedMethod {
+public class ExposedMethod implements Serializable {
 
     public final String name;
     public final String originalMethod;

@@ -5,6 +5,8 @@ import net.globulus.easyprefs.annotation.PrefFunctionStub;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
 import net.globulus.easyprefs.processor.util.ProcessorLog;
 
+import java.io.Serializable;
+
 import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
@@ -16,7 +18,7 @@ import javax.lang.model.util.Types;
 /**
  * Created by gordanglavas on 30/09/16.
  */
-public class PrefField {
+public class PrefField implements Serializable {
 
 	public final String fieldType;
 	public final String fieldName;
