@@ -21,28 +21,37 @@ import javawriter.EzprefsJavaWriter;
  */
 public class MergeFileCodeGen {
 
+	public static final String CLASS_NAME = "EasyPrefsMerge_";
+	public static final String MERGE_FIELD_NAME = "MERGE";
+	public static final String NEXT_FIELD_NAME = "NEXT";
+
 	public void generate(Filer filer, EasyPrefsCodeGen.Input input) {
 		try {
 			String packageName = FrameworkUtil.getEasyPrefsPackageName();
-			String className = "EasyPrefsMerge";
 
-			JavaFileObject jfo = filer.createSourceFile(packageName + "." + className);
-			Writer writer = jfo.openWriter();
-			try (EzprefsJavaWriter jw = new EzprefsJavaWriter(writer)) {
-				jw.emitPackage(packageName);
-				jw.emitEmptyLine();
+			byte[] bytes = convertToBytes(input);
+			final int step = 8_000;
+			for (int i = 0, count = 0; i < bytes.length; i += step, count++) {
+				String className = CLASS_NAME + count;
+				JavaFileObject jfo = filer.createSourceFile(packageName + "." + className);
+				Writer writer = jfo.openWriter();
+				try (EzprefsJavaWriter jw = new EzprefsJavaWriter(writer)) {
+					jw.emitPackage(packageName);
+					jw.emitEmptyLine();
 
-				jw.emitJavadoc("Generated class by @%s . Do not modify this code!", className);
-				jw.beginType(className, "class", EnumSet.of(Modifier.PUBLIC), null);
-				jw.emitEmptyLine();
+					jw.emitJavadoc("Generated class by @%s . Do not modify this code!", className);
+					jw.beginType(className, "class", EnumSet.of(Modifier.PUBLIC), null);
+					jw.emitEmptyLine();
 
-				byte[] bytes = convertToBytes(input);
-				jw.emitField("byte[]", "MERGE", EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL),
-						fromBytes(bytes));
+					jw.emitField("byte[]", MERGE_FIELD_NAME, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL),
+							fromBytes(Arrays.copyOfRange(bytes, i, Math.min(bytes.length, i + step))));
 
-				jw.endType();
+					jw.emitField("boolean", NEXT_FIELD_NAME, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL),
+							Boolean.toString(i < bytes.length - step));
+
+					jw.endType();
+				}
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -11,6 +11,7 @@ import net.globulus.easyprefs.processor.util.ProcessorLog;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -163,18 +164,28 @@ public class Processor extends AbstractProcessor {
 
 		EasyPrefsCodeGen.Input input = new EasyPrefsCodeGen.Input(masterMethod, prefTypes, exposedMethods);
 		if (shouldMerge != null && shouldMerge) {
+			ByteBuffer buffer = ByteBuffer.allocate(50_000);
 			try {
-				Class mergeClass = Class.forName(FrameworkUtil.getEasyPrefsPackageName() + ".EasyPrefsMerge");
-				byte[] bytes = (byte[]) mergeClass.getField("MERGE").get(null);
-				EasyPrefsCodeGen.Input merge = EasyPrefsCodeGen.Input.fromBytes(bytes);
-				input = input.mergedUp(merge);
+				for (int i = 0; i < Integer.MAX_VALUE; i++) {
+					Class mergeClass = Class.forName(FrameworkUtil.getEasyPrefsPackageName() + "." + MergeFileCodeGen.CLASS_NAME + i);
+					buffer.put((byte[]) mergeClass.getField(MergeFileCodeGen.MERGE_FIELD_NAME).get(null));
+					if (!mergeClass.getField(MergeFileCodeGen.NEXT_FIELD_NAME).getBoolean(null)) {
+						break;
+					}
+				}
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			} catch (NoSuchFieldException e) {
 				e.printStackTrace();
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
+			}
+			try {
+				EasyPrefsCodeGen.Input merge = EasyPrefsCodeGen.Input.fromBytes(buffer.array());
+				input = input.mergedUp(merge);
 			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
