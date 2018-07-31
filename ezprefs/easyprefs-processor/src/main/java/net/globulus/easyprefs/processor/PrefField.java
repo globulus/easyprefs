@@ -26,6 +26,7 @@ public class PrefField implements Serializable {
 	public final String defaultValue;
 	public final String autoset;
 	public final boolean clear;
+	public final boolean addClearMethod;
 	public final String comment;
 	public final String oldKey;
 
@@ -55,6 +56,7 @@ public class PrefField implements Serializable {
 				}
 			}
 			this.clear = annotation.clear();
+			this.addClearMethod = annotation.addClearMethod();
 			this.comment = annotation.comment();
 			this.oldKey = annotation.oldKey();
 			if (this.function != null && annotation.rawDefaultValue().isEmpty()) {
@@ -64,6 +66,7 @@ public class PrefField implements Serializable {
 			rawDefaultValue = annotation.rawDefaultValue();
 		} else {
 			this.clear = true;
+			this.addClearMethod = false;
 			this.autoset = null;
 			this.function = null;
 			this.comment = "";
