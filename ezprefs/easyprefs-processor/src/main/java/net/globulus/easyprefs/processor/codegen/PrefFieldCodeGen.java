@@ -15,6 +15,7 @@ import javawriter.EzprefsJavaWriter;
 public class PrefFieldCodeGen implements CodeGen<PrefField> {
 
     private static final String GET_PREFERENCES_FIELD_FORMAT = "getPreferencesField(context, \"%s\", %s)";
+    private static final String EDITOR_REMOVE_FORMAT = "editor.remove(\"%s\")";
 
     @Override
     public void generateCode(PrefField field, EzprefsJavaWriter jw) throws IOException {
@@ -36,7 +37,8 @@ public class PrefFieldCodeGen implements CodeGen<PrefField> {
           defaultValue = field.defaultValue;
       }
 
-      if (field.oldKey != null && !field.oldKey.isEmpty()) {
+      boolean hasOldKey = field.oldKey != null && !field.oldKey.isEmpty();
+      if (hasOldKey) {
           defaultValue = String.format(GET_PREFERENCES_FIELD_FORMAT, field.oldKey, defaultValue);
       }
 
@@ -109,6 +111,19 @@ public class PrefFieldCodeGen implements CodeGen<PrefField> {
           jw.endMethod();
       }
 
+      if (field.addClearMethod) {
+          jw.emitEmptyLine();
+          jw.beginMethod("void", "clear" + name, modifiers,
+                  "Context", "context");
+          jw.emitStatement(FrameworkUtil.LINE_EDITOR_INIT);
+          jw.emitStatement(EDITOR_REMOVE_FORMAT, field.key);
+          if (hasOldKey) {
+              jw.emitStatement(EDITOR_REMOVE_FORMAT, field.oldKey);
+          }
+          jw.emitStatement(FrameworkUtil.LINE_EDITOR_COMMIT);
+          jw.endMethod();
+      }
+
         if (!field.comment.isEmpty()) {
             jw.emitEmptyLine();
             jw.emitSingleLineComment("");
@@ -125,7 +140,11 @@ public class PrefFieldCodeGen implements CodeGen<PrefField> {
         if (!clearables.isEmpty()) {
             jw.emitStatement(FrameworkUtil.LINE_EDITOR_INIT);
             for (PrefField field : clearables) {
-                jw.emitStatement("editor.remove(\"%s\")", field.key);
+                jw.emitStatement(EDITOR_REMOVE_FORMAT, field.key);
+                if (field.oldKey != null && !field.oldKey.isEmpty()) {
+                    jw.emitStatement(EDITOR_REMOVE_FORMAT, field.oldKey);
+
+                }
             }
             jw.emitStatement(FrameworkUtil.LINE_EDITOR_COMMIT);
         }
