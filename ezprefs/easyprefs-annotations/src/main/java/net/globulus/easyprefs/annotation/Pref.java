@@ -19,4 +19,5 @@ public @interface Pref {
     Class<? extends PrefFunction> function() default PrefFunctionStub.class;
     String rawDefaultValue() default "";
     String comment() default "";
+    String oldKey() default "";
 }

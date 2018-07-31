@@ -27,6 +27,7 @@ public class PrefField implements Serializable {
 	public final String autoset;
 	public final boolean clear;
 	public final String comment;
+	public final String oldKey;
 
 	private String function;
 	private String rawDefaultValue;
@@ -55,6 +56,7 @@ public class PrefField implements Serializable {
 			}
 			this.clear = annotation.clear();
 			this.comment = annotation.comment();
+			this.oldKey = annotation.oldKey();
 			if (this.function != null && annotation.rawDefaultValue().isEmpty()) {
 				ProcessorLog.error(element, "If you supply a mapping function, you must supply a rawDefaultValue as well.");
 				error = true;
@@ -65,6 +67,7 @@ public class PrefField implements Serializable {
 			this.autoset = null;
 			this.function = null;
 			this.comment = "";
+			this.oldKey = null;
 		}
 		this.key = key;
 		if (element.getConstantValue() != null) {

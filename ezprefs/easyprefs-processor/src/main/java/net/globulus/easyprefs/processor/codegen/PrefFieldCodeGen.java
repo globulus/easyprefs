@@ -14,6 +14,8 @@ import javawriter.EzprefsJavaWriter;
 
 public class PrefFieldCodeGen implements CodeGen<PrefField> {
 
+    private static final String GET_PREFERENCES_FIELD_FORMAT = "getPreferencesField(context, \"%s\", %s)";
+
     @Override
     public void generateCode(PrefField field, EzprefsJavaWriter jw) throws IOException {
       Set<Modifier> modifiers = EnumSet.of(Modifier.PUBLIC, Modifier.STATIC);
@@ -33,6 +35,11 @@ public class PrefFieldCodeGen implements CodeGen<PrefField> {
       } else {
           defaultValue = field.defaultValue;
       }
+
+      if (field.oldKey != null && !field.oldKey.isEmpty()) {
+          defaultValue = String.format(GET_PREFERENCES_FIELD_FORMAT, field.oldKey, defaultValue);
+      }
+
       String name = FrameworkUtil.capitalize(field.fieldName);
 
       String mappingFunction = field.getFunction();
@@ -47,7 +54,7 @@ public class PrefFieldCodeGen implements CodeGen<PrefField> {
       jw.emitEmptyLine();
       jw.beginMethod(field.fieldType, "get" + name, modifiers,
               "Context", "context");
-      String getPrefString = String.format("getPreferencesField(context, \"%s\", %s)", field.key, defaultValue);
+      String getPrefString = String.format(GET_PREFERENCES_FIELD_FORMAT, field.key, defaultValue);
       if (hasMapping) {
           jw.emitStatement(functionInstance);
           jw.emitStatement("return mapper.get(%s)", getPrefString);
