@@ -43,7 +43,12 @@ EasyPrefs allows for using multiple nested modules, e.g having an EasyPrefs for 
 
 However, this **doesn't work straight away** because of Android Dexing. Please use [single prefs branch](https://github.com/globulus/easyprefs/tree/single-easyprefs) until this is resolved.
 
-### Sample Code
+
+### Kotlin notes
+
+EasyPrefs works normally with Kotlin, as long as companion object methods (either *@PrefMaster* or *@PrefMethod*) **aren't annotated with @JvmStatic**.
+
+### Sample code
 
 SharedPrefs.java
 ```java
