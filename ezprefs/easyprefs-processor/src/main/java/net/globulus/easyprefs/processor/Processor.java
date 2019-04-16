@@ -40,6 +40,7 @@ public class Processor extends AbstractProcessor {
 			Pref.class
 	);
 	private static final String MERGED_FILE = "ezprefs.merged";
+	private static final String COMPANION_NAME = "Companion";
 
 	private Elements mElementUtils;
 	private Types mTypeUtils;
@@ -74,15 +75,19 @@ public class Processor extends AbstractProcessor {
 
 		boolean foundMaster = false;
 		String masterTag = PrefMaster.class.getSimpleName();
-		String masterError = masterTag + " must of of format: public static SharedPreferences NAME(Context context)!";
+		String masterError = masterTag + " must be of format: public static SharedPreferences NAME(Context context)!";
 		for (Element element : roundEnv.getElementsAnnotatedWith(PrefMaster.class)) {
 			if (foundMaster) {
 				ProcessorLog.error(element, "Found more than one " + masterTag + "!");
 				return false;
 			}
 			foundMaster = true;
-			if (!element.getModifiers().contains(Modifier.PUBLIC)
-					|| !element.getModifiers().contains(Modifier.STATIC)) {
+			if (!element.getModifiers().contains(Modifier.PUBLIC)) {
+				ProcessorLog.error(element, masterError);
+				return false;
+			}
+			if (!element.getModifiers().contains(Modifier.STATIC)
+					&& !isStaticInKotlin(element)) {
 				ProcessorLog.error(element, masterError);
 				return false;
 			}
@@ -109,7 +114,8 @@ public class Processor extends AbstractProcessor {
 
 		for (Element element : roundEnv.getElementsAnnotatedWith(PrefMethod.class)) {
 			if (!element.getModifiers().contains(Modifier.PUBLIC)
-					|| !element.getModifiers().contains(Modifier.STATIC)) {
+					|| (!element.getModifiers().contains(Modifier.STATIC)
+						&& !isStaticInKotlin(element))) {
 				ProcessorLog.error(element, PrefMethod.class.getSimpleName() + " methods must be public static!");
 				return false;
 			}
@@ -204,5 +210,21 @@ public class Processor extends AbstractProcessor {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Checks if the given element has the static modifier in Kotlin by checking if its enclosing
+	 * element is a public static final
+	 * @param element
+	 * @return true if it is static in Kotlin
+	 */
+	private boolean isStaticInKotlin(Element element) {
+		Element enclosing = element.getEnclosingElement();
+		return enclosing.getModifiers().contains(Modifier.PUBLIC)
+				&& enclosing.getModifiers().contains(Modifier.STATIC)
+				&& enclosing.getModifiers().contains(Modifier.FINAL)
+				&& enclosing.getKind().isClass()
+				&& enclosing.getSimpleName().contentEquals(COMPANION_NAME)
+				&& element.getModifiers().contains(Modifier.FINAL);
 	}
 }
