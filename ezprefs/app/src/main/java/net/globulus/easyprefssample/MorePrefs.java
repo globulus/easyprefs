@@ -11,6 +11,7 @@ import net.globulus.easyprefs.annotation.PrefClass;
 import net.globulus.easyprefs.annotation.PrefFunction;
 import net.globulus.easyprefs.annotation.PrefMethod;
 
+import java.sql.SQLException;
 import java.util.Set;
 
 /**
@@ -19,7 +20,7 @@ import java.util.Set;
 
 // Automatically add all fields from this class to EasyPrefs.
 // Make an in inner static class in EasyPrefs to group these fields.
-@PrefClass
+@PrefClass(destination = true)
 public class MorePrefs {
 
     int intField;
@@ -33,6 +34,8 @@ public class MorePrefs {
     String nonNullString;
     @Pref(nullable = true)
     String nullableString;
+
+    final long biglong = -62135769600L;
 
     // Don't add this field to clear() or clearAll() methods
     // Add a comment above its getter and setter
@@ -55,7 +58,7 @@ public class MorePrefs {
     }
 
     @PrefMethod
-    public static int getThisPref(Context context) {
+    public static int getThisPref(Context context) throws SQLException {
         return EasyPrefs.getPreferencesField(context, "thisPref", 1);
     }
 

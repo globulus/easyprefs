@@ -39,12 +39,13 @@ public class Processor extends AbstractProcessor {
 			PrefClass.class,
 			Pref.class
 	);
-	private static final String MERGED_FILE = "ezprefs.merged";
 	private static final String COMPANION_NAME = "Companion";
 
 	private Elements mElementUtils;
 	private Types mTypeUtils;
 	private Filer mFiler;
+
+	private long mTimestamp;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment env) {
@@ -55,6 +56,8 @@ public class Processor extends AbstractProcessor {
 		mElementUtils = env.getElementUtils();
 		mTypeUtils = env.getTypeUtils();
 		mFiler = env.getFiler();
+
+		mTimestamp = System.currentTimeMillis();
 	}
 
 	@Override
@@ -126,6 +129,7 @@ public class Processor extends AbstractProcessor {
 //			ProcessorLog.error(null, "Unable to find " + masterTag);
 //		}
 		Boolean shouldMerge = null;
+		boolean foundDestination = false;
 		for (Element element : roundEnv.getElementsAnnotatedWith(PrefClass.class)) {
 			if (!isValid(element)) {
 				continue;
@@ -136,7 +140,9 @@ public class Processor extends AbstractProcessor {
 			PrefClass annotation = element.getAnnotation(PrefClass.class);
 			boolean autoInclude = annotation.autoInclude();
 
-			if (annotation.origin()) {
+			if (annotation.destination()) {
+				foundDestination = true;
+			} else if (annotation.origin()) {
 				shouldMerge = false;
 			} else if (shouldMerge == null) {
 				shouldMerge = true;
@@ -169,35 +175,51 @@ public class Processor extends AbstractProcessor {
 		}
 
 		EasyPrefsCodeGen.Input input = new EasyPrefsCodeGen.Input(masterMethod, prefTypes, exposedMethods);
-		if (shouldMerge != null && shouldMerge) {
+		if (shouldMerge != null && shouldMerge || foundDestination) {
 			ByteBuffer buffer = ByteBuffer.allocate(50_000);
-			try {
-				for (int i = 0; i < Integer.MAX_VALUE; i++) {
-					Class mergeClass = Class.forName(FrameworkUtil.getEasyPrefsPackageName() + "." + MergeFileCodeGen.CLASS_NAME + i);
-					buffer.put((byte[]) mergeClass.getField(MergeFileCodeGen.MERGE_FIELD_NAME).get(null));
-					if (!mergeClass.getField(MergeFileCodeGen.NEXT_FIELD_NAME).getBoolean(null)) {
-						break;
+				// Find first merge file
+			ProcessorLog.warn(null, "Finding first merge file");
+				final int MAX_MILLIS_PASSED = 60_000;
+				Long firstMergeClassIndex = null;
+				for (int i = MAX_MILLIS_PASSED; i > 0; i--) {
+					long index = mTimestamp - i;
+					try {
+						Class.forName(FrameworkUtil.getEasyPrefsPackageName() + "."
+								+ MergeFileCodeGen.CLASS_NAME + index);
+						firstMergeClassIndex = index;
+						ProcessorLog.warn(null, "Found " + firstMergeClassIndex);
+						break; // break if no exception was thrown
+					} catch (ClassNotFoundException ignored) { }
+				}
+				if (firstMergeClassIndex != null) {
+					try {
+						for (int i = 0; i < Integer.MAX_VALUE; i++) {
+							long index = firstMergeClassIndex + i;
+							Class mergeClass = Class.forName(FrameworkUtil.getEasyPrefsPackageName()
+									+ "." + MergeFileCodeGen.CLASS_NAME + index);
+							buffer.put((byte[]) mergeClass.getField(MergeFileCodeGen.MERGE_FIELD_NAME).get(null));
+							if (!mergeClass.getField(MergeFileCodeGen.NEXT_FIELD_NAME).getBoolean(null)) {
+								break;
+							}
+						}
+					} catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+						e.printStackTrace();
 					}
 				}
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			} catch (NoSuchFieldException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-			}
 			try {
 				EasyPrefsCodeGen.Input merge = EasyPrefsCodeGen.Input.fromBytes(buffer.array());
 				input = input.mergedUp(merge);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
+			} catch (IOException | ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
-		new MergeFileCodeGen().generate(mFiler, input);
 
-		new EasyPrefsCodeGen().generate(mFiler, input);
+		new MergeFileCodeGen().generate(mFiler, mTimestamp, input);
+
+		ProcessorLog.warn(null, "Should merge " + shouldMerge + " destination " + foundDestination);
+		if (foundDestination) {
+			new EasyPrefsCodeGen().generate(mFiler, input);
+		}
 
 		return true;
 	}

@@ -2,12 +2,12 @@ package net.globulus.easyprefs.processor.codegen;
 
 import com.annimon.stream.Stream;
 import com.annimon.stream.function.Function;
-import com.annimon.stream.function.Predicate;
 
 import net.globulus.easyprefs.processor.ExposedMethod;
 import net.globulus.easyprefs.processor.PrefField;
 import net.globulus.easyprefs.processor.PrefType;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
+import net.globulus.easyprefs.processor.util.ProcessorLog;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,6 +32,9 @@ import javawriter.EzprefsJavaWriter;
  */
 public class EasyPrefsCodeGen {
 
+	private static final Set<Modifier> PUBLIC_MODIFIER = EnumSet.of(Modifier.PUBLIC);
+	private static final Set<Modifier> PUBLIC_STATIC_MODIFIERS = EnumSet.of(Modifier.PUBLIC, Modifier.STATIC);
+
 	public void generate(Filer filer, Input input) {
 		try {
 			String packageName = FrameworkUtil.getEasyPrefsPackageName();
@@ -47,7 +50,7 @@ public class EasyPrefsCodeGen {
 				jw.emitImports(FrameworkUtil.IMPORT_SHARED_PREFERENCES);
 				jw.emitEmptyLine();
 
-				jw.emitJavadoc("Generated class by @%s . Do not modify this code!", className);
+				jw.emitJavadoc("Generated class by @%s. Do not modify this code!", className);
 				jw.beginType(className, "class", EnumSet.of(Modifier.PUBLIC), null);
 				jw.emitEmptyLine();
 
@@ -55,9 +58,28 @@ public class EasyPrefsCodeGen {
 				jw.endConstructor();
 				jw.emitEmptyLine();
 
-				Set<Modifier> modifiers = EnumSet.of(Modifier.PUBLIC, Modifier.STATIC);
+				jw.emitSingleLineComment("Set IEasyPrefs instance");
+				jw.beginStaticBlock();
+				jw.emitStatement("IEasyPrefs.setInstance(new IEasyPrefs() {");
 
-				jw.beginMethod("SharedPreferences", "getPrefs", modifiers,
+				writePrefMethods(jw, true, PUBLIC_MODIFIER,
+						(w, args) ->
+								w.emitStatement("EasyPrefs.putPreferencesField(context, key, value)"),
+						(w, args) ->
+								w.emitStatement("return EasyPrefs.getPreferencesField(context, key, defaultValue)")
+				);
+				writeRemoveMethod(jw, true, PUBLIC_MODIFIER, (w, args) ->
+						w.emitStatement("EasyPrefs.removePreferencesField(context, key)"));
+
+				jw.emitAnnotation(Override.class);
+				jw.beginMethod("void", "clearAll", PUBLIC_MODIFIER, "Context", "context");
+				jw.emitStatement("EasyPrefs.clearAll(context)");
+				jw.endMethod();
+
+				jw.emitStatement("})");
+				jw.endStaticBlock();
+
+				jw.beginMethod("SharedPreferences", "getPrefs", PUBLIC_STATIC_MODIFIERS,
 						"Context", "context");
 				jw.emitStatement("return %s(context)", input.masterMethod);
 				jw.endMethod();
@@ -66,59 +88,23 @@ public class EasyPrefsCodeGen {
 				jw.emitSingleLineComment("Basic storage methods");
 				jw.emitEmptyLine();
 
-				jw.beginMethod("void", "removePreferencesField", modifiers,
-						"Context", "context", "String", "key");
-				jw.emitStatement(FrameworkUtil.LINE_EDITOR_INIT);
-				jw.emitStatement("editor.remove(key)");
-				jw.emitStatement(FrameworkUtil.LINE_EDITOR_COMMIT);
-				jw.endMethod();
-				jw.emitEmptyLine();
+				writeRemoveMethod(jw, false, PUBLIC_STATIC_MODIFIERS, (w, args) -> {
+					w.emitStatement(FrameworkUtil.LINE_EDITOR_INIT);
+					w.emitStatement("editor.remove(key)");
+					w.emitStatement(FrameworkUtil.LINE_EDITOR_COMMIT);
+				});
 
-				for (String type : Arrays.asList("int", "long", "float", "boolean", "String", "Set<String>")) {
-					String method = type;
-					boolean addRemove = false;
-					if (type.equals("Set<String>")) {
-						method = "StringSet";
-						addRemove = true;
-					} else if (!type.equals("String")) {
-						method = FrameworkUtil.capitalize(type);
-					}
+				writePrefMethods(jw, false, PUBLIC_STATIC_MODIFIERS,
+						(w, args) -> {
+					w.emitStatement(FrameworkUtil.LINE_EDITOR_INIT);
+					w.emitStatement("editor.put%s(key, value)", args[0]);
+					w.emitStatement(FrameworkUtil.LINE_EDITOR_COMMIT);
+				}, (w, args) ->
+					w.emitStatement("return getPrefs(context).get%s(key, defaultValue)", args[0]));
 
-					jw.beginMethod("void", "putPreferencesField", modifiers,
-							"Context", "context", "String", "key", type, "value");
-					jw.emitStatement(FrameworkUtil.LINE_EDITOR_INIT);
-					jw.emitStatement("editor.put%s(key, value)", method);
-					jw.emitStatement(FrameworkUtil.LINE_EDITOR_COMMIT);
-					jw.endMethod();
-					jw.emitEmptyLine();
-
-					jw.beginMethod(type, "getPreferencesField", modifiers,
-							"Context", "context", "String", "key", type, "defaultValue");
-					jw.emitStatement("return getPrefs(context).get%s(key, defaultValue)", method);
-					jw.endMethod();
-					jw.emitEmptyLine();
-
-					if (addRemove) {
-						jw.beginMethod("void", "addToPreferencesField", modifiers,
-								"Context", "context", "String", "key", "String", "value");
-						jw.emitStatement("Set<String> set = getPreferencesField(context, key, new HashSet<String>())");
-						jw.emitStatement("set.add(value)");
-						jw.emitStatement("putPreferencesField(context, key, set)");
-						jw.endMethod();
-						jw.emitEmptyLine();
-
-						jw.beginMethod("void", "removeFromPreferencesField", modifiers,
-								"Context", "context", "String", "key", "String", "value");
-						jw.emitStatement("Set<String> set = getPreferencesField(context, key, new HashSet<String>())");
-						jw.emitStatement("set.remove(value)");
-						jw.emitStatement("putPreferencesField(context, key, set)");
-						jw.endMethod();
-						jw.emitEmptyLine();
-					}
-				}
-
-				jw.emitSingleLineComment("Generated methods");
-				jw.emitEmptyLine();
+				jw.emitEmptyLine()
+						.emitSingleLineComment("Generated methods")
+						.emitEmptyLine();
 
 				PrefClassCodeGen typeCodeGen = new PrefClassCodeGen();
 				for (PrefType prefType : input.classes) {
@@ -131,43 +117,18 @@ public class EasyPrefsCodeGen {
 				}
 
 				List<PrefField> clearables = Stream.of(input.classes)
-						.filter(new Predicate<PrefType>() {
-							@Override
-							public boolean test(PrefType value) {
-								return !value.staticClass;
-							}
-						})
-						.map(new Function<PrefType, List<PrefField>>() {
-							@Override
-							public List<PrefField> apply(PrefType prefType) {
-								return prefType.fields;
-							}
-						})
-						.flatMap(new Function<List<PrefField>, Stream<PrefField>>() {
-							@Override
-							public Stream<PrefField> apply(List<PrefField> prefFields) {
-								return Stream.of(prefFields);
-							}
-						})
-						.filter(new Predicate<PrefField>() {
-							@Override
-							public boolean test(PrefField value) {
-								return value.clear;
-							}
-						})
+						.filter(value -> !value.staticClass)
+						.map(prefType -> prefType.fields)
+						.flatMap((Function<List<PrefField>, Stream<PrefField>>) Stream::of)
+						.filter(value -> value.clear)
 						.toList();
 				PrefFieldCodeGen.generateClearMethod(clearables, jw);
 
 				jw.emitEmptyLine();
-				jw.beginMethod("void", "clearAll", modifiers, "Context", "context");
+				jw.beginMethod("void", "clearAll", PUBLIC_STATIC_MODIFIERS, "Context", "context");
 				jw.emitStatement("clear(context)");
 				List<PrefType> clearableClasses = Stream.of(input.classes)
-						.filter(new Predicate<PrefType>() {
-							@Override
-							public boolean test(PrefType value) {
-								return value.staticClass;
-							}
-						})
+						.filter(value -> value.staticClass)
 						.toList();
 				for (PrefType prefType : clearableClasses) {
 					jw.emitStatement("%s.clear(context)", prefType.name);
@@ -182,13 +143,87 @@ public class EasyPrefsCodeGen {
 		}
 	}
 
+	private void writeRemoveMethod(EzprefsJavaWriter jw,
+								   boolean isOverride,
+								   Set<Modifier> modifiers,
+								   PrefMethodBodyWriter bodyWriter) throws IOException {
+		if (isOverride) {
+			jw.emitAnnotation(Override.class);
+		}
+		jw.beginMethod("void", "removePreferencesField", modifiers,
+				"Context", "context", "String", "key");
+		bodyWriter.writeBody(jw);
+		jw.endMethod();
+		jw.emitEmptyLine();
+	}
+
+	private void writePrefMethods(EzprefsJavaWriter jw,
+								  boolean isOverride,
+								  Set<Modifier> modifiers,
+								  PrefMethodBodyWriter putBodyWriter,
+								  PrefMethodBodyWriter getBodyWriter) throws IOException {
+		for (String type : Arrays.asList("int", "long", "float", "boolean", "String", "Set<String>")) {
+			String method = type;
+			boolean addRemove = false;
+			if (type.equals("Set<String>")) {
+				method = "StringSet";
+				addRemove = true;
+			} else if (!type.equals("String")) {
+				method = FrameworkUtil.capitalize(type);
+			}
+
+			if (isOverride) {
+				jw.emitAnnotation(Override.class);
+			}
+			jw.beginMethod("void", "putPreferencesField", modifiers,
+					"Context", "context", "String", "key", type, "value");
+			putBodyWriter.writeBody(jw, method);
+			jw.endMethod();
+			jw.emitEmptyLine();
+
+			if (isOverride) {
+				jw.emitAnnotation(Override.class);
+			}
+			jw.beginMethod(type, "getPreferencesField", modifiers,
+					"Context", "context", "String", "key", type, "defaultValue");
+			getBodyWriter.writeBody(jw, method);
+			jw.endMethod();
+			jw.emitEmptyLine();
+
+			if (addRemove) {
+				if (isOverride) {
+					jw.emitAnnotation(Override.class);
+				}
+				jw.beginMethod("void", "addToPreferencesField", modifiers,
+						"Context", "context", "String", "key", "String", "value");
+				jw.emitStatement("Set<String> set = getPreferencesField(context, key, new HashSet<String>())");
+				jw.emitStatement("set.add(value)");
+				jw.emitStatement("putPreferencesField(context, key, set)");
+				jw.endMethod();
+				jw.emitEmptyLine();
+
+				if (isOverride) {
+					jw.emitAnnotation(Override.class);
+				}
+				jw.beginMethod("void", "removeFromPreferencesField", modifiers,
+						"Context", "context", "String", "key", "String", "value");
+				jw.emitStatement("Set<String> set = getPreferencesField(context, key, new HashSet<String>())");
+				jw.emitStatement("set.remove(value)");
+				jw.emitStatement("putPreferencesField(context, key, set)");
+				jw.endMethod();
+				jw.emitEmptyLine();
+			}
+		}
+	}
+
 	public static class Input implements Serializable {
 
-		public final String masterMethod;
-		public final List<PrefType> classes;
-		public final List<ExposedMethod> methods;
+		final String masterMethod;
+		final List<PrefType> classes;
+		final List<ExposedMethod> methods;
 
 		public Input(String masterMethod, List<PrefType> classes, List<ExposedMethod> methods) {
+			ProcessorLog.warn(null, "input constructor " + masterMethod);
 			this.masterMethod = masterMethod;
 			this.classes = classes;
 			this.methods = methods;
@@ -196,6 +231,7 @@ public class EasyPrefsCodeGen {
 
 		public Input mergedUp(Input other) {
 			String masterMethod = (other.masterMethod != null) ? other.masterMethod : this.masterMethod;
+			ProcessorLog.warn(null, "merge up constructor " + masterMethod);
 			List<PrefType> classes = new ArrayList<>(other.classes);
 			classes.addAll(this.classes);
 			List<ExposedMethod> methods = new ArrayList<>(other.methods);
@@ -209,5 +245,9 @@ public class EasyPrefsCodeGen {
 				return (Input) in.readObject();
 			}
 		}
+	}
+
+	private interface PrefMethodBodyWriter {
+		void writeBody(EzprefsJavaWriter jw, String... args) throws IOException;
 	}
 }

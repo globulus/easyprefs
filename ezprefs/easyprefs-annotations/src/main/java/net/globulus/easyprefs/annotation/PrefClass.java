@@ -14,4 +14,5 @@ public @interface PrefClass {
 	boolean staticClass() default true;
 	boolean autoInclude() default true;
 	boolean origin() default false;
+	boolean destination() default false;
 }

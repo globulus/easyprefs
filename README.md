@@ -24,6 +24,7 @@ dependencies {
    * *staticClass* - if true, prefs will be enclosed within a static class in EasyPrefs, allowing for contextual grouping of prefs. Otherwise, all prefs will be added to the root level of the EasyPrefs class.
    * *autoInclude* - if true, all fields from the class will be automatically added to prefs. Otherwise, only those marked with @Pref will be added.
    * *origin* - determines if the given PrefClass is in the top-level module, and should be used as the origin point for prefs merging between modules. See [multi-module support](#using-multiple-modules) for more details.
+   * *destination* - determines if the given PrefClass is in the bottom-level module, and should be used as the last point for merged module pref files. **One class in the module that seeks to directly use EasyPrefs should have this set to true in order for the EasyPrefs file to be generated.**  See [multi-module support](#using-multiple-modules) for more details.
 * **PrefMaster** - marks a public static method returning an instance of SharedPreferences that will be used in generated code to retrieve the SharedPreferences instance we want to work with. See [sample code](#sample-code) for more details.
 * **Pref** - used to mark fields that should be added to EasyPrefs and allows options to be associated with them. If all you wish is default behaviour and the enclosing PrefClass has autoInclude set to true, you needn't use the Pref annotation.
     * *key* - the to use when storing this field in SharedPreferences. If omitted, the name of the field will be used.
@@ -39,10 +40,7 @@ dependencies {
 
 ### Using multiple modules
 
-EasyPrefs allows for using multiple nested modules, e.g having an EasyPrefs for a library, and the app dependent on it. The top-level library PrefClass should have *origin* set to true. Starting with it, EasyPrefs will merge pref classes from all the modules down the hierarchy.
-
-However, this **doesn't work straight away** because of Android Dexing. Please use [single prefs branch](https://github.com/globulus/easyprefs/tree/single-easyprefs) until this is resolved.
-
+EasyPrefs allows for using multiple nested modules, e.g having an EasyPrefs for a library, and the app dependent on it. The top-level library PrefClass should have *origin* set to true. Starting with it, EasyPrefs will merge pref classes from all the modules down the hierarchy, until it reaches the *destination* level module.
 
 ### Kotlin notes
 

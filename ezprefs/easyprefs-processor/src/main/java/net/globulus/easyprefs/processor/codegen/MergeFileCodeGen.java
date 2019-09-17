@@ -1,6 +1,7 @@
 package net.globulus.easyprefs.processor.codegen;
 
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
+import net.globulus.easyprefs.processor.util.ProcessorLog;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,21 +26,21 @@ public class MergeFileCodeGen {
 	public static final String MERGE_FIELD_NAME = "MERGE";
 	public static final String NEXT_FIELD_NAME = "NEXT";
 
-	public void generate(Filer filer, EasyPrefsCodeGen.Input input) {
+	public void generate(Filer filer, long timestamp, EasyPrefsCodeGen.Input input) {
 		try {
 			String packageName = FrameworkUtil.getEasyPrefsPackageName();
-
 			byte[] bytes = convertToBytes(input);
 			final int step = 8_000;
 			for (int i = 0, count = 0; i < bytes.length; i += step, count++) {
-				String className = CLASS_NAME + count;
+				String className = CLASS_NAME + (timestamp + count);
+				ProcessorLog.warn(null, "Creating file " + className);
 				JavaFileObject jfo = filer.createSourceFile(packageName + "." + className);
 				Writer writer = jfo.openWriter();
 				try (EzprefsJavaWriter jw = new EzprefsJavaWriter(writer)) {
 					jw.emitPackage(packageName);
 					jw.emitEmptyLine();
 
-					jw.emitJavadoc("Generated class by @%s . Do not modify this code!", className);
+					jw.emitJavadoc("Generated class by @%s. Do not modify this code!", className);
 					jw.beginType(className, "class", EnumSet.of(Modifier.PUBLIC), null);
 					jw.emitEmptyLine();
 

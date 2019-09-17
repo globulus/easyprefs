@@ -1,1 +1,1 @@
-include ':app', ':easyprefs-annotations', ':easyprefs-processor', ':easyprefs'
+include ':app', ':easyprefs-annotations', ':easyprefs-processor', ':easyprefs', ':ezprefstestlib'
