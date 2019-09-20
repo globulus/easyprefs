@@ -8,12 +8,9 @@ import net.globulus.easyprefs.processor.PrefField;
 import net.globulus.easyprefs.processor.PrefType;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
 import net.globulus.easyprefs.processor.util.ProcessorLog;
+import net.globulus.mmap.MergeInput;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -216,7 +213,7 @@ public class EasyPrefsCodeGen {
 		}
 	}
 
-	public static class Input implements Serializable {
+	public static class Input implements MergeInput<Input> {
 
 		final String masterMethod;
 		final List<PrefType> classes;
@@ -229,6 +226,7 @@ public class EasyPrefsCodeGen {
 			this.methods = methods;
 		}
 
+		@Override
 		public Input mergedUp(Input other) {
 			String masterMethod = (other.masterMethod != null) ? other.masterMethod : this.masterMethod;
 			ProcessorLog.warn(null, "merge up constructor " + masterMethod);
@@ -237,13 +235,6 @@ public class EasyPrefsCodeGen {
 			List<ExposedMethod> methods = new ArrayList<>(other.methods);
 			methods.addAll(this.methods);
 			return new Input(masterMethod, classes, methods);
-		}
-
-		public static Input fromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
-			try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-				 ObjectInput in = new ObjectInputStream(bis)) {
-				return (Input) in.readObject();
-			}
 		}
 	}
 

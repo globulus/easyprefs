@@ -8,7 +8,10 @@ import net.globulus.easyprefs.processor.codegen.EasyPrefsCodeGen;
 import net.globulus.easyprefs.processor.codegen.MergeFileCodeGen;
 import net.globulus.easyprefs.processor.util.FrameworkUtil;
 import net.globulus.easyprefs.processor.util.ProcessorLog;
+import net.globulus.mmap.MergeManager;
+import net.globulus.mmap.ShouldMergeResolver;
 
+import java.awt.Frame;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.nio.ByteBuffer;
@@ -34,6 +37,7 @@ import javax.lang.model.util.Types;
 
 public class Processor extends AbstractProcessor {
 
+    private static final String NAME = "EasyPrefs";
 	private static final List<Class<? extends Annotation>> ANNOTATIONS = Arrays.asList(
 			PrefMaster.class,
 			PrefClass.class,
@@ -174,49 +178,29 @@ public class Processor extends AbstractProcessor {
 			}
 		}
 
+		final boolean shouldMergeResolution = shouldMerge != null && shouldMerge || foundDestination;
 		EasyPrefsCodeGen.Input input = new EasyPrefsCodeGen.Input(masterMethod, prefTypes, exposedMethods);
-		if (shouldMerge != null && shouldMerge || foundDestination) {
-			ByteBuffer buffer = ByteBuffer.allocate(50_000);
-				// Find first merge file
-			ProcessorLog.warn(null, "Finding first merge file");
-				final int MAX_MILLIS_PASSED = 60_000;
-				Long firstMergeClassIndex = null;
-				for (int i = MAX_MILLIS_PASSED; i > 0; i--) {
-					long index = mTimestamp - i;
-					try {
-						Class.forName(FrameworkUtil.getEasyPrefsPackageName() + "."
-								+ MergeFileCodeGen.CLASS_NAME + index);
-						firstMergeClassIndex = index;
-						ProcessorLog.warn(null, "Found " + firstMergeClassIndex);
-						break; // break if no exception was thrown
-					} catch (ClassNotFoundException ignored) { }
-				}
-				if (firstMergeClassIndex != null) {
-					try {
-						for (int i = 0; i < Integer.MAX_VALUE; i++) {
-							long index = firstMergeClassIndex + i;
-							Class mergeClass = Class.forName(FrameworkUtil.getEasyPrefsPackageName()
-									+ "." + MergeFileCodeGen.CLASS_NAME + index);
-							buffer.put((byte[]) mergeClass.getField(MergeFileCodeGen.MERGE_FIELD_NAME).get(null));
-							if (!mergeClass.getField(MergeFileCodeGen.NEXT_FIELD_NAME).getBoolean(null)) {
-								break;
-							}
-						}
-					} catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-						e.printStackTrace();
+		input = new MergeManager<EasyPrefsCodeGen.Input>(mFiler, mTimestamp,
+                FrameworkUtil.getEasyPrefsPackageName(), NAME,
+                (ShouldMergeResolver) () -> shouldMergeResolution)
+				.setProcessorLog(new net.globulus.mmap.ProcessorLog() {
+					@Override
+					public void note(Element element, String s, Object... objects) {
+						ProcessorLog.note(element, s, objects);
 					}
-				}
-			try {
-				EasyPrefsCodeGen.Input merge = EasyPrefsCodeGen.Input.fromBytes(buffer.array());
-				input = input.mergedUp(merge);
-			} catch (IOException | ClassNotFoundException e) {
-				e.printStackTrace();
-			}
-		}
 
-		new MergeFileCodeGen().generate(mFiler, mTimestamp, input);
+					@Override
+					public void warn(Element element, String s, Object... objects) {
+						ProcessorLog.warn(element, s, objects);
+					}
 
-		ProcessorLog.warn(null, "Should merge " + shouldMerge + " destination " + foundDestination);
+					@Override
+					public void error(Element element, String s, Object... objects) {
+						ProcessorLog.error(element, s, objects);
+					}
+				})
+                .manageMerging(input);
+
 		if (foundDestination) {
 			new EasyPrefsCodeGen().generate(mFiler, input);
 		}

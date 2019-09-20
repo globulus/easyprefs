@@ -13,6 +13,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(path: ':easyprefs-annotations')
     implementation 'com.annimon:stream:1.1.9'
+    compile 'net.globulus.mmap:mmap:1.0.0'
 }
 
 sourceCompatibility = "1.8"

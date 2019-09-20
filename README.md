@@ -42,6 +42,8 @@ dependencies {
 
 EasyPrefs allows for using multiple nested modules, e.g having an EasyPrefs for a library, and the app dependent on it. The top-level library PrefClass should have *origin* set to true. Starting with it, EasyPrefs will merge pref classes from all the modules down the hierarchy, until it reaches the *destination* level module.
 
+Hierarchical processing is powered by [MMAP](https://github.com/globulus/mmap).
+
 ### Kotlin notes
 
 EasyPrefs works normally with Kotlin, as long as companion object methods (either *@PrefMaster* or *@PrefMethod*) **aren't annotated with @JvmStatic**.
